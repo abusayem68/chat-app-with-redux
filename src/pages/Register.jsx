@@ -1,7 +1,46 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/images/lws-logo-light.svg';
+import Error from '../components/ui/Error';
+import { useRegisterMutation } from '../features/auth/authApi';
 
 export default function Register() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [agree, setAgree] = useState(false);
+  const [error, setError] = useState('');
+
+  const [register, { data, isLoading, error: responseError }] =
+    useRegisterMutation();
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (responseError?.data) {
+      setError(responseError.data);
+    }
+    if (data?.accessToken && data?.user) {
+      navigate('/inbox');
+    }
+  }, [data, responseError, navigate]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (password !== confirmPassword) {
+      setError('Password do not matched');
+    } else {
+      register({
+        name,
+        email,
+        password,
+      });
+    }
+  };
+
   return (
     <div className="grid place-items-center h-screen bg-[#F9FAFB">
       <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -18,8 +57,7 @@ export default function Register() {
           </div>
           <form
             className="mt-8 space-y-6"
-            action="#"
-            method="POST">
+            onSubmit={handleSubmit}>
             <input
               type="hidden"
               name="remember"
@@ -35,8 +73,10 @@ export default function Register() {
                 <input
                   id="name"
                   name="Name"
-                  type="Name"
+                  type="text"
                   autoComplete="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-violet-500 focus:border-violet-500 focus:z-10 sm:text-sm"
                   placeholder="Name"
@@ -54,6 +94,8 @@ export default function Register() {
                   name="email"
                   type="email"
                   autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-violet-500 focus:border-violet-500 focus:z-10 sm:text-sm"
                   placeholder="Email address"
@@ -71,6 +113,8 @@ export default function Register() {
                   name="password"
                   type="password"
                   autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-violet-500 focus:border-violet-500 focus:z-10 sm:text-sm"
                   placeholder="Password"
@@ -86,8 +130,10 @@ export default function Register() {
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type="confirmPassword"
+                  type="password"
                   autoComplete="current-confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-violet-500 focus:border-violet-500 focus:z-10 sm:text-sm"
                   placeholder="confirmPassword"
@@ -98,9 +144,12 @@ export default function Register() {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
-                  id="remember-me"
-                  name="remember-me"
+                  id="agree"
+                  name="agree"
                   type="checkbox"
+                  required
+                  checked={agree}
+                  onChange={(e) => setAgree(e.target.checked)}
                   className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded"
                 />
                 <label
@@ -114,11 +163,13 @@ export default function Register() {
             <div>
               <button
                 type="submit"
+                disabled={isLoading}
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500">
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3"></span>
                 Sign up
               </button>
             </div>
+            {error !== '' && <Error message={error} />}
           </form>
           <div className="text-sm">
             <span className="opacity-90">Already have an account ?</span>
